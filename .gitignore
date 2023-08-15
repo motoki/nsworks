@@ -1,2 +1,5 @@
 venv/
 data/
+*.pt
+*.jpg
+*.webp
