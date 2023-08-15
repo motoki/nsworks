@@ -8,9 +8,9 @@ def main():
     weight = "./data/weights/yolov8n.pt"
     model = YOLO(weight)
 
-    images= [r"C:\Users\skyfl\reps\nsworks\data\images\hourse.jpg",
-            r"C:\Users\skyfl\reps\nsworks\data\images\Cat03.jpg",
-            r"C:\Users\skyfl\reps\nsworks\data\images\bus.jpg"]
+    images= ["./data/images/hourse.jpg",
+            "./data/images/Cat03.jpg",
+            "./data/images/bus.jpg"]
 
     results = model.predict(images, save=True, conf=0.2)
 
