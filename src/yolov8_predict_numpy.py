@@ -28,6 +28,7 @@ def main():
         d = ImageDraw.Draw(img_pil)
         for i, box in enumerate(result.boxes):
             cls = box.cls.item()
+            conf = box.conf.item()
             name = names[cls]
             # x = box.xywh[0][0].item()
             # y = box.xywh[0][1].item()
@@ -38,9 +39,6 @@ def main():
 
     out_path = "./data/results/out.jpg"
     img_pil.save(out_path) 
-
-    
-
 
 
 if __name__ == "__main__":
