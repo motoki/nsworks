@@ -1,0 +1,6 @@
+data:
+  images: ./data/images/360
+  yolo:
+    weight: ./data/weight/yolov8n.pt
+  results:
+    output: ./data/result/output
