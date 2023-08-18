@@ -1,0 +1,5 @@
+node:
+  loompa: 10                 #  シンプルバリュー
+  zippity: ${node.loompa}    # 値の補完
+  do: "oompa ${node.loompa}" # 値の補完（文字列)
+  waldo: ???                 # ミッシングバリュー
