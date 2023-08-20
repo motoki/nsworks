@@ -1,0 +1,3 @@
+yolo:
+  weight: ./data/weights/yolov8s-seg.pt
+  movie: ./data/movie/short_clip.mp4

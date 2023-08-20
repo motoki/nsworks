@@ -1,0 +1,3 @@
+fastsam:
+  weight: ./data/weights/FastSAM-s.pt
+  source: ./data/images/street.jpg

@@ -1,0 +1,3 @@
+yolo:
+  weight: ./data/weights/yolov8s-pose.pt
+  movie: ./data/movie/koi_dance.mp4
