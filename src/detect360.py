@@ -30,40 +30,23 @@ def image_processor(image: Image):
 
     return cube_img
     
-def process_images(folder_path, dest_path, image_processor):
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                image_path = os.path.join(root, file)
-                try:
-                    image = Image.open(image_path)
-                    image_dest = image_processor(image)
 
-                    
-                    exif_info = image._getexif()
-                    if exif_info:
-                        print('Image has Exif Information')
-                    else:
-                        print('No Exif')
-
-                except Exception as e:
-                    print(e)
-                    print(f"Error processing image{image_path}")
-
-def drawRects(image, results):
+def drawRects(image, results, colors):
     img_pil = Image.fromarray(image[:, :, ::-1])
-    #img_pil = img_pil[:,:,::-1]
+
     for i, result in enumerate(results):
         names = result.names
 
         draw = ImageDraw.Draw(img_pil)
         for i, box in enumerate(result.boxes):
-            cls = box.cls.item()
-            draw.rectangle(box.xyxy.to('cpu').detach().numpy(), outline="blue", width=5)
+            cls = int(box.cls.item())
+            c = colors[cls]
+            name = names[cls]
+            draw.rectangle(box.xyxy.to('cpu').detach().numpy(), outline=c, width=5)
     
     return img_pil
 
-def process_image(image: Image, rots, w_face, height, width, model) -> Image:
+def process_image(image: Image, rots, w_face, height, width, model, colors) -> Image:
     ##############
     # numpy に変換
     image_dat = np.array(image)
@@ -84,7 +67,7 @@ def process_image(image: Image, rots, w_face, height, width, model) -> Image:
         results = model.predict(tmp_dat, save=False, imgsz=w_face, conf=0.2)
         
         # 結果を描画
-        tmp_dat_pil = drawRects(tmp_dat, results)
+        tmp_dat_pil = drawRects(tmp_dat, results, colors)
         image_slices.append((tmp_dat_pil, results))
     
     # 描画した画像を結合
@@ -97,6 +80,7 @@ def process_image(image: Image, rots, w_face, height, width, model) -> Image:
 
     horizon_img_dat = np.array(horizon_img)
     horizon_img_dat = horizon_img_dat.transpose(2, 0, 1)
+
     #######################
     #eqirectanglar形式に変換'
     eqirect_dat = cube2equi(horizon_img_dat, cube_format="horizon", height=height, width=width)
@@ -108,10 +92,27 @@ def process_image(image: Image, rots, w_face, height, width, model) -> Image:
 @hydra.main(version_base=None, config_path="./config", config_name="config")
 def main(cfg: DictConfig):
 
+    # 設定値の読み込み
     images_dir = cfg.data.images
     out_dir = cfg.data.results.output
     weight = cfg.data.yolo.weight
+    w_face = cfg.data.w_face    #w_face = 3392 #3368
 
+    rots = {
+        "roll": cfg.data.rots.roll,
+        "pitch": cfg.data.rots.pitch,
+        "yaw": cfg.data.rots.yaw
+    }
+
+    # rots = {
+    #     "roll": 0,
+    #     "pitch": 0,
+    #     "yaw" : 0,
+    # }
+
+    colors = cfg.data.colors
+
+    # 出力先フォルダの用意
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     
@@ -125,29 +126,23 @@ def main(cfg: DictConfig):
 
     progress_bar = tqdm(total=len(image_files), desc='Process Images', unit='image')
 
-    rots = {
-        "roll": 0,
-        "pitch": 0,
-        "yaw" : 0,
-    }
-    w_face = 3392 #3368
+    # model 
     model = YOLO(weight)
 
     for image_file in image_files:
         # process image
         img = Image.open(image_file)
 
+        processed_img = process_image(img, rots, w_face, img.height, img.width, model, colors)
 
-        processed_img = process_image(img, rots, w_face, img.height, img.width, model)
-
-        # copy exif and save
-
+        # 出力先フォルダの作成
         out_path = image_file.replace(images_dir, out_dir)
-
         parent_dir = os.path.dirname(out_path)
+
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir, exist_ok=True)
 
+        # copy exif and save
         exif = img.info['exif']
         if exif:
             processed_img.save(out_path, exif=exif)

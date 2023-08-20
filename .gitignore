@@ -3,5 +3,7 @@ data/
 *.pt
 *.jpg
 *.webp
+*.avi
+*.mp4
 
 **/outputs/
